@@ -16,3 +16,7 @@ dist/
 
 # Ignore vscode directory
 .vscode/
+local_dino/
+results/
+dataset/**/*.npy
+dataset/imagenet_like/

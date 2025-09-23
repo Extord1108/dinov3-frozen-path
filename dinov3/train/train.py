@@ -16,6 +16,7 @@ from pathlib import Path
 import torch
 import torch.distributed
 from torch.distributed._tensor import DTensor
+from torch.utils.tensorboard import SummaryWriter
 
 import dinov3.distributed as distributed
 from dinov3.checkpointer import (
@@ -316,7 +317,6 @@ def build_data_loader_from_cfg(
         sampler_type = SamplerType.INFINITE
     else:
         sampler_type = SamplerType.SHARDED_INFINITE if cfg.train.cache_dataset else SamplerType.INFINITE
-
     data_loader = make_data_loader(
         dataset=dataset,
         batch_size=batch_size,
@@ -385,6 +385,8 @@ def do_train(cfg, model, resume=False):
     ckpt_dir.mkdir(parents=True, exist_ok=True)
 
     model.train()
+    # Tensorboard writer
+    writer = SummaryWriter(log_dir=os.path.join(cfg.train.output_dir, "tensorboard"))
     # Optimizer
     optimizer = build_optimizer(cfg, model.get_params_groups())
     (
@@ -549,6 +551,11 @@ def do_train(cfg, model, resume=False):
         metric_logger.update(mom=mom)
         metric_logger.update(last_layer_lr=last_layer_lr)
         metric_logger.update(total_loss=total_loss, **metrics_dict)
+        # Log metrics to tensorboard
+        # 只在rank 0 写入tensorboard
+        if distributed.is_subgroup_main_process():
+            writer.add_scalar("total_loss", total_loss, it)
+            writer.add_scalars("metrics", metrics_dict, it)
 
         # Submit evaluation jobs
         if (

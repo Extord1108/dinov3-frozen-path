@@ -1,0 +1,3 @@
+dataset_name,patches_path
+CPTAC-AML,/nfs/data13/PublicPathologyData/CPTAC/processed_224/CPTAC-AML/20x_224px_0px_overlap/jpeg_patches/
+CPTAC-BRCA,/nfs/data13/PublicPathologyData/CPTAC/processed_224/CPTAC-BRCA/20x_224px_0px_overlap/jpeg_patches/

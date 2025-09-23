@@ -1,3 +1,37 @@
+# DINOv3-frozen-path
+
+### 数据集
+
+在`./dataset/pathology/entry.csv`中填入数据集名称和存放jpeg图片的文件夹路径。其中`dataset_name`不能重复，`patches_path`的结构如下：
+
+- <patches_path>
+  - <slide1_name>
+    - <slide1_name>\_patch\_0.jpeg
+    - <slide1_name>\_patch\_1.jpeg
+    - ...
+    - <slide1_name>\_patch\_<index>.jpeg
+  - <slide2_name>
+    - <slide2_name>_patch_0.jpeg
+    - <slide2_name>_patch_1.jpeg
+    - ...
+    - <slide2_name>_patch_<index>.jpeg
+
+### 训练
+
+先执行`gen_extra.py`生成entries：
+
+```bash
+python gen_extra.py
+```
+
+再开始训练：
+
+```bash
+PYTHONPATH=${PWD} torchrun --standalone --nnodes=1 --nproc-per-node=4 dinov3/train/train.py --config-file dinov3/configs/train/vitl_im1k_lin834.yaml --output-dir ./results/pathology/ train.dataset_path=Pathology:split=TRAIN:root=./dataset/pathology/:extra=./dataset/pathology/
+```
+
+
+
 🆕 [2025-08-14] :fire: DINOv3 backbones are now available in [Hugging Face Hub](https://huggingface.co/collections/facebook/dinov3-68924841bd6b561778e31009) and [supported](https://huggingface.co/docs/transformers/model_doc/dinov3) by the Hugging Face [Transformers](https://huggingface.co/docs/transformers/index) library
 
 # DINOv3 🦖🦖🦖
