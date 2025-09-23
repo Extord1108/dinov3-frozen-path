@@ -9,12 +9,12 @@
     - <slide1_name>\_patch\_0.jpeg
     - <slide1_name>\_patch\_1.jpeg
     - ...
-    - <slide1_name>\_patch\_<index>.jpeg
+    - <slide1_name>\_patch\_\{n\}.jpeg
   - <slide2_name>
     - <slide2_name>_patch_0.jpeg
     - <slide2_name>_patch_1.jpeg
     - ...
-    - <slide2_name>_patch_<index>.jpeg
+    - <slide2_name>_patch_\{n\}.jpeg
 
 ### 训练
 
