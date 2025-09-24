@@ -18,5 +18,5 @@ dist/
 .vscode/
 local_dino/
 results/
-dataset/**/*.npy
-dataset/imagenet_like/
+dataset/
+dataset/

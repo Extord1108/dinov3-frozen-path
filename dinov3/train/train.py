@@ -386,7 +386,8 @@ def do_train(cfg, model, resume=False):
 
     model.train()
     # Tensorboard writer
-    writer = SummaryWriter(log_dir=os.path.join(cfg.train.output_dir, "tensorboard"))
+    if distributed.is_subgroup_main_process():
+        writer = SummaryWriter(log_dir=os.path.join(cfg.train.output_dir, "tensorboard"))
     # Optimizer
     optimizer = build_optimizer(cfg, model.get_params_groups())
     (
@@ -551,7 +552,6 @@ def do_train(cfg, model, resume=False):
         metric_logger.update(mom=mom)
         metric_logger.update(last_layer_lr=last_layer_lr)
         metric_logger.update(total_loss=total_loss, **metrics_dict)
-        # Log metrics to tensorboard
         # 只在rank 0 写入tensorboard
         if distributed.is_subgroup_main_process():
             writer.add_scalar("total_loss", total_loss, it)

@@ -80,10 +80,10 @@ class Pathology(ExtendedVisionDataset):
             self._entry_dataset = pd.read_csv(os.path.join(self.root, "entry.csv"))
         if self._entry_slide is None:
             self._entry_slide = {}
-            for _, row in self._entry_dataset.iterrows():
-                dataset_name = row["dataset_name"]
+            for idx, row in self._entry_dataset.iterrows():
+                dataset_index = idx
                 patches_path = row["patches_path"]
-                self._entry_slide[dataset_name] = sorted(os.listdir(patches_path))
+                self._entry_slide[dataset_index] = sorted(os.listdir(patches_path))
         
         assert self._entries is not None
         assert self._entry_dataset is not None
@@ -94,12 +94,11 @@ class Pathology(ExtendedVisionDataset):
         entries, entry_dataset, entry_slide = self._get_entries()
         actual_index = entries[index]["actual_index"]
         dir_index = entries[index]["dir_index"]
-        dataset_name = entries[index]["dataset_name"]
-        dataset_path = entry_dataset[entry_dataset["dataset_name"] == dataset_name]["patches_path"].values[0]
-        patches_path = entry_slide[dataset_name][dir_index]
+        dataset_index = entries[index]["dataset_index"]
+        dataset_path = entry_dataset.iloc[dataset_index]["patches_path"]
+        slide_name = entry_slide[dataset_index][dir_index]
 
-
-        image_full_path = os.path.join(dataset_path, patches_path,f"{patches_path}_patch_{actual_index}.jpeg")
+        image_full_path = os.path.join(dataset_path, slide_name,f"{slide_name}_patch_{actual_index}.jpeg")
         with open(image_full_path, mode="rb") as f:
             image_data = f.read()
         return image_data
@@ -121,12 +120,9 @@ class Pathology(ExtendedVisionDataset):
         entry_df = pd.read_csv(os.path.join(self.root, entry_path))
 
         sample_count = 0
-        max_dataset_name_length = 0
 
         for _, row in entry_df.iterrows():
-            dataset_name = row["dataset_name"]
             patches_dirs_path = row["patches_path"]
-            max_dataset_name_length = max(len(dataset_name), max_dataset_name_length)
             patches_dirs = os.listdir(patches_dirs_path)
             for patches_dir in patches_dirs:
                 patches_path = os.path.join(patches_dirs_path, patches_dir)
@@ -136,29 +132,29 @@ class Pathology(ExtendedVisionDataset):
             [
                 ("actual_index", "<u4"),
                 ("dir_index", "<u4"),
-                ("dataset_name", f"U{max_dataset_name_length}"),
+                ("dataset_index", f"<u4"),
             ]
         )
-        entries_array = np.empty(sample_count+1, dtype=dtype)
+        entries_array = np.empty(sample_count, dtype=dtype)
 
         pbar = tqdm(total=sample_count, desc="Total progress")
         count_idx = 0
-        for _, row in entry_df.iterrows():
-            dataset_name = row["dataset_name"]
+        for idx, row in entry_df.iterrows():
+            dataset_index = idx
             patches_dirs_path = row["patches_path"]
             patches_dirs = os.listdir(patches_dirs_path)
             patches_dirs.sort()
             for dir_index, patches_dir in enumerate(patches_dirs):
                 patches_path = os.path.join(patches_dirs_path, patches_dir)
                 for patch_file in os.listdir(patches_path):
-                    if count_idx+1 >= sample_count:
+                    if count_idx+1 > sample_count:
                         break
-                    if not patch_file.endswith(".png"):
+                    if not patch_file.endswith(".jpeg"):
                         continue
                     actual_index = int(patch_file.split(".")[0].split("_")[-1])
                     entries_array[count_idx]["actual_index"] = actual_index
                     entries_array[count_idx]["dir_index"] = dir_index
-                    entries_array[count_idx]["dataset_name"] = dataset_name
+                    entries_array[count_idx]["dataset_index"] = dataset_index
                     count_idx += 1
                     pbar.update(1)
 
