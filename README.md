@@ -16,6 +16,10 @@
     - ...
     - <slide2_name>_patch_\{n\}.jpeg
 
+### 预训练模型
+
+在配置文件的`train.init_weights_from_chkpt`中添加预训练模型路径，如`hf-hub:MahmoodLab/uni`, `/data/PublicDINOv3Checkpoints/dinov3_vitl16_pretrain_lvd1689m-8aa4cbdd.pth`
+
 ### 训练
 
 先执行`gen_extra.py`生成entries：

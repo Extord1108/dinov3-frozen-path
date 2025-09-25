@@ -15,4 +15,5 @@ from .checkpointer import (
     load_checkpoint,
     register_dont_save_hooks,
     save_checkpoint,
+    init_fsdp_model_from_pretrained_model,
 )

@@ -12,7 +12,7 @@ from omegaconf import OmegaConf
 from torch import Tensor, nn
 
 import dinov3.distributed as distributed
-from dinov3.checkpointer import init_fsdp_model_from_checkpoint
+from dinov3.checkpointer import init_fsdp_model_from_checkpoint,init_fsdp_model_from_pretrained_model
 from dinov3.configs import get_default_config
 from dinov3.data import DataAugmentationDINO
 from dinov3.fsdp.ac_compile_parallelize import ac_compile_parallelize
@@ -327,7 +327,24 @@ class SSLMetaArch(nn.Module):
                 self.student,
                 self.cfg.student.resume_from_teacher_chkpt,
                 skip_load_keys=["dino_loss.center", "ibot_patch_loss.center"],
-                keys_not_sharded=["backbone.rope_embed.periods", "qkv.bias_mask"],
+                keys_not_sharded=["rope_embed.periods", "qkv.bias_mask"],
+                process_group=distributed.get_process_subgroup(),
+            )
+            self.model_ema.load_state_dict(self.student.state_dict())
+        if self.cfg.train.init_weights_from_chkpt:
+            logger.info(f"Loading pretrained weights from {self.cfg.train.init_weights_from_chkpt}")
+            init_fsdp_model_from_pretrained_model(
+                self.student,
+                self.cfg.train.init_weights_from_chkpt,
+                skip_load_keys=["dino_loss.center", "ibot_patch_loss.center"],
+                keys_not_sharded=["rope_embed.periods", "qkv.bias_mask"],
+                process_group=distributed.get_process_subgroup(),
+            )
+            init_fsdp_model_from_pretrained_model(
+                self.teacher,
+                self.cfg.train.init_weights_from_chkpt,
+                skip_load_keys=["dino_loss.center", "ibot_patch_loss.center"],
+                keys_not_sharded=["rope_embed.periods", "qkv.bias_mask"],
                 process_group=distributed.get_process_subgroup(),
             )
             self.model_ema.load_state_dict(self.student.state_dict())

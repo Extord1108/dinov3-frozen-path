@@ -265,6 +265,63 @@ def _is_int(s: str) -> bool:
 
 
 # Initialize a FSDP2 model from DCP or PyTorch standard checkpoint
+def init_fsdp_model_from_pretrained_model(
+    model: torch.nn.Module,
+    checkpoint_path: str,
+    skip_load_keys: List[str] | None = None,
+    keys_not_sharded: List[str] | None = None,
+    process_group: dist.ProcessGroup = None,
+):
+    if not Path(checkpoint_path).exists():
+        try:
+            import timm
+            timm_kwargs={
+                # "dynamic_img_size": True,
+                # "num_classes": 0,
+                "init_values": 1e-5 # init_values need to be passed in to successfully load LayerScale parameters (e.g. - block.0.ls1.gamma)
+                }
+            pretrained_model = timm.create_model(checkpoint_path, pretrained=True, **timm_kwargs)
+            chkpt = pretrained_model.state_dict()
+        except:
+            try:
+                from transformers import  AutoModel
+                pretrained_model = AutoModel.from_pretrained(checkpoint_path)
+                chkpt = pretrained_model.state_dict()
+            except Exception as e:
+                raise Exception(f"Failed to download {checkpoint_path} model, make sure that you were granted access and that you correctly registered your token") from e
+    elif not Path(checkpoint_path).is_dir():
+        chkpt = torch.load(checkpoint_path, map_location="cpu")
+    else:
+        raise ValueError(f"Unknown checkpoint type: {checkpoint_path}")
+
+    from torch.distributed.device_mesh import DeviceMesh, init_device_mesh
+
+    if process_group is None:
+        world_mesh = init_device_mesh(
+            "cuda",
+            mesh_shape=(dist.get_world_size(),),
+            mesh_dim_names=("dp",),
+        )
+    else:
+        world_mesh = DeviceMesh.from_group(process_group, "cuda")
+    chkpt = {
+        f"backbone.{key}": (
+            torch.distributed.tensor.distribute_tensor(tensor, world_mesh, src_data_rank=None)
+            if not any(key_not_sharded in key for key_not_sharded in keys_not_sharded)
+            else tensor
+        )
+        for key, tensor in chkpt.items()
+    }
+    model.load_state_dict(
+        {
+            key: tensor
+            for key, tensor in chkpt.items()
+            if not any(skip_load_key in key for skip_load_key in skip_load_keys)
+        },
+        strict=False,
+    )
+
+# Initialize a FSDP2 model from DCP or PyTorch standard checkpoint
 def init_fsdp_model_from_checkpoint(
     model: torch.nn.Module,
     checkpoint_path: str,

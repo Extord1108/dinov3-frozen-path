@@ -554,6 +554,10 @@ def do_train(cfg, model, resume=False):
         metric_logger.update(total_loss=total_loss, **metrics_dict)
         # 只在rank 0 写入tensorboard
         if distributed.is_subgroup_main_process():
+            writer.add_scalar("dino_local_crops_loss", metrics_dict["dino_local_crops_loss"], it)
+            writer.add_scalar("dino_global_crops_loss", metrics_dict["dino_global_crops_loss"], it)
+            writer.add_scalar("koleo_loss", metrics_dict["koleo_loss"], it)
+            writer.add_scalar("ibot_loss", metrics_dict["ibot_loss"], it)
             writer.add_scalar("total_loss", total_loss, it)
             writer.add_scalars("metrics", metrics_dict, it)
 

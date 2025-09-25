@@ -39,7 +39,7 @@ ibot:
   head_nlayers: 3
   head_hidden_dim: 2048
 train:
-  batch_size_per_gpu: 64
+  batch_size_per_gpu: 96
   dataset_path: ImageNet:split=TRAIN
   output_dir: /checkpoint/dino/qas/rope/vitl16_im1k
   saveckp_freq: 20
@@ -57,6 +57,7 @@ train:
   cudagraphs: false
   cell_augmentation: false
   cell_augmentation_type: hpa
+  init_weights_from_chkpt: "hf-hub:MahmoodLab/uni" #"/data/PublicDINOv3Checkpoints/dinov3_vitl16_pretrain_lvd1689m-8aa4cbdd.pth" #
 student:
   arch: vit_large
   patch_size: 16

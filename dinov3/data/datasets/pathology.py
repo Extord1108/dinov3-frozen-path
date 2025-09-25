@@ -158,7 +158,14 @@ class Pathology(ExtendedVisionDataset):
                     count_idx += 1
                     pbar.update(1)
 
-        logger.info(f'saving entries to "{self._entries_path}"')
+        import math
+        epoch_length = sample_count // (96 * 4 * 100)
+        epoch_length = math.ceil(epoch_length / 50) * 50
+        print(f'saving entries to "{self._entries_path}"')
+        print("为了让模型至少见过每张图片一次，需满足：")
+        print("batch_size * epochs * epoch_length > dataset_size")
+        print("其中：batch_size = batch_size_per_gpu * gpu_num = 96 * 4 = 384; epochs = 100")
+        print(f"因此：epoch_length 为 dataset_size / batch_size / epochs，约为 {epoch_length}，请填入配置文件的train.OFFICIAL_EPOCH_LENGTH")
         self._save_extra(entries_array, self._entries_path)
 
     def dump_extra(self) -> None:
