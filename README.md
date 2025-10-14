@@ -47,12 +47,13 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 PYTHONPATH=${PWD} torchrun --standalone --nnodes=1 
 
 提取特征
 ```bash
-python /data/tanyuyi/code/dinov3-frozen-path/extract_feature.py.py
-
-CLAM里面有批量代码
-
+CLAM版本
 cd /nfs/data371/tyy/code/1.CLAM-master-LUAD
 CUDA_VISIBLE_DEVICES=0,1 python extract_features_fp_dinov3.py  --data_h5_dir /data/tanyuyi/data/CMU/一中心/RESULTS116 --data_slide_dir /data/tanyuyi/data/CMU/一中心/WSI116 --csv_path /data/tanyuyi/data/CMU/一中心/RESULTS116/Step_2.csv --feat_dir   /data/tanyuyi/data/FEATURES_DIRECTORY_CTranspath  --batch_size 512 --slide_ext .ndpi --target_patch_size 224 --checkpoint /data/tanyuyi/code/dinov3-frozen-path/results/UNI/eval/training_12499/teacher_checkpoint.pth
+
+TRIDENT版本【推荐：适配clam和trident切的patch】
+cd /data/tanyuyi/code/0-trident
+python run_batch_of_slides.py --task feat --wsi_dir /data/tanyuyi/data/CMU/一中心/WSI363 --job_dir /data/tanyuyi/data/CMU/一中心/Feature-40x-1024-UNIv2-363-tryyyyyyyy --patch_encoder dinov3-UNI --mag 40 --patch_size 1024 --skip_errors --coords_dir /data/tanyuyi/data/CMU/一中心/RESULTS363-1024 --gpu 2 --patch_encoder_ckpt_path /data/tanyuyi/code/dinov3-frozen-path/results/vitl16/eval/training_112499/teacher_checkpoint.pth
 
 ```
 
