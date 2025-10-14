@@ -65,31 +65,38 @@ class DataAugmentationDINO(object):
 
         # Global crops and gram teacher crops can have different sizes. We first take a crop of the maximum size
         # and then resize it to the desired size for global and gram teacher crops.
+        #全球作物和克教师作物可以有不同的大小。我们首先选取最大尺寸的作物，然后将其调整到全局和克教师作物所需的大小。
         global_crop_max_size = max(global_crops_size, gram_teacher_crops_size if gram_teacher_crops_size else 0)
 
         # random resized crop and flip
         self.geometric_augmentation_global = v2.Compose(
             [
+                #随机裁剪输入图像的一块区域（crop），然后再把这块区域缩放到指定的输出大小global_crop_max_size
                 v2.RandomResizedCrop(
-                    global_crop_max_size,
-                    scale=global_crops_scale,
+                    global_crop_max_size, #resize
+                    scale=global_crops_scale, #0.32和1，随机裁剪的面积比例
                     interpolation=v2.InterpolationMode.BICUBIC,
                 ),
                 v2.RandomHorizontalFlip(p=0.5 if horizontal_flips else 0.0),
             ]
         )
 
+#####################################################
         resize_global = nn.Identity()  # Resize transform applied to global crops after random crop
         self.resize_global_post_transf = (
             nn.Identity()
         )  # Resize transform applied to global crops after all other transforms
         self.resize_gram_teacher = None  # Resize transform applied to crops for gram teacher
+        
         if gram_teacher_crops_size is not None:
             # All resize transforms will do nothing if the crop size is already the desired size.
             if gram_teacher_no_distortions:
                 # When there a no distortions for the gram teacher crop, we can resize before the distortions.
                 # This is the preferred order, because it keeps the image size for the augmentations consistent,
                 # which matters e.g. for GaussianBlur.
+                #当克教师裁剪没有失真时，我们可以在失真之前调整大小。
+                #这是优选的顺序，
+                #这对例如GaussianBlur来说很重要。
                 resize_global = v2.Resize(
                     global_crops_size,
                     interpolation=v2.InterpolationMode.BICUBIC,
@@ -97,6 +104,8 @@ class DataAugmentationDINO(object):
             else:
                 # When there a no distortions for the gram teacher crop, we need to resize after the distortions,
                 # because the distortions are shared between global and gram teacher crops.
+                #当克教师裁剪没有失真时，我们需要在失真后调整大小，
+                #因为这些扭曲是全球作物和克氏教师作物共同的。
                 self.resize_global_post_transf = v2.Resize(
                     global_crops_size,
                     interpolation=v2.InterpolationMode.BICUBIC,
@@ -106,19 +115,21 @@ class DataAugmentationDINO(object):
                 gram_teacher_crops_size,
                 interpolation=v2.InterpolationMode.BICUBIC,
             )
+############################################################
+
 
         self.geometric_augmentation_local = v2.Compose(
             [
                 v2.RandomResizedCrop(
                     local_crops_size,
-                    scale=local_crops_scale,
+                    scale=local_crops_scale, #0.05，0.32
                     interpolation=v2.InterpolationMode.BICUBIC,
                 ),
                 v2.RandomHorizontalFlip(p=0.5 if horizontal_flips else 0.0),
             ]
         )
 
-        # color distortions / blurring
+        # color distortions / blurring颜色失真/模糊
         color_jittering = v2.Compose(
             [
                 v2.RandomApply(
@@ -129,12 +140,12 @@ class DataAugmentationDINO(object):
             ]
         )
 
-        global_transfo1_extra = GaussianBlur(p=1.0)
+        global_transfo1_extra = GaussianBlur(p=1.0)#以 100% 概率 对图像做模糊。模糊程度是随机的
 
         global_transfo2_extra = v2.Compose(
             [
                 GaussianBlur(p=0.1),
-                v2.RandomSolarize(threshold=128, p=0.2),
+                v2.RandomSolarize(threshold=128, p=0.2),#反转亮部
             ]
         )
 
@@ -170,10 +181,13 @@ class DataAugmentationDINO(object):
         if self.share_color_jitter:
             image = self.color_jittering(image)
 
+
+
+
         # global crops:
-        im1_base = self.geometric_augmentation_global(image)
-        global_crop_1_transf = self.global_transfo1(im1_base)
-        global_crop_1 = self.resize_global_post_transf(global_crop_1_transf)
+        im1_base = self.geometric_augmentation_global(image)#随机裁剪、缩放到最大
+        global_crop_1_transf = self.global_transfo1(im1_base)#不失真：缩放回global-size   
+        global_crop_1 = self.resize_global_post_transf(global_crop_1_transf) #失真：缩放回global-size   
 
         im2_base = self.geometric_augmentation_global(image)
         global_crop_2_transf = self.global_transfo2(im2_base)
@@ -181,25 +195,34 @@ class DataAugmentationDINO(object):
 
         output["global_crops"] = [global_crop_1, global_crop_2]
 
+
         # global crops for teacher:
-        if self.teacher_no_color_jitter:
+        if self.teacher_no_color_jitter:###
             output["global_crops_teacher"] = [
                 self.normalize(im1_base),
                 self.normalize(im2_base),
             ]
         else:
-            output["global_crops_teacher"] = [global_crop_1, global_crop_2]
+            output["global_crops_teacher"] = [global_crop_1, global_crop_2]#
+
+
+
+
+
+
 
         if self.gram_teacher_crops_size is not None:
             # crops for gram teacher:
-            if self.gram_teacher_no_distortions:
+            if self.gram_teacher_no_distortions: #True，不失真
                 gram_crop_1 = self.normalize(self.resize_gram_teacher(im1_base))
                 gram_crop_2 = self.normalize(self.resize_gram_teacher(im2_base))
-            else:
+            else:#失真【小resize到大】
                 gram_crop_1 = self.resize_gram_teacher(global_crop_1_transf)
                 gram_crop_2 = self.resize_gram_teacher(global_crop_2_transf)
             output["gram_teacher_crops"] = [gram_crop_1, gram_crop_2]
 
+
+#################################################################
         # local crops:
         if self.local_crops_subset_of_global_crops:
             _local_crops = [self.local_transfo(im1_base) for _ in range(self.local_crops_number // 2)] + [

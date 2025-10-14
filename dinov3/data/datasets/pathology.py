@@ -23,7 +23,6 @@ _Target = int
 class _Split(Enum):
     TRAIN = "train"
 
-
 class Pathology(ExtendedVisionDataset):
     Target = Union[_Target]
     Split = Union[_Split]
@@ -34,6 +33,7 @@ class Pathology(ExtendedVisionDataset):
         split: "Pathology.Split",
         root: str,
         extra: str,
+        sshid: str,
         transforms: Optional[Callable] = None,
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
@@ -47,6 +47,7 @@ class Pathology(ExtendedVisionDataset):
             target_decoder=TargetDecoder,
         )
         self._extra_root = extra
+        self.sshid = sshid,
         self._split = split
 
         self._entries = None
@@ -83,6 +84,14 @@ class Pathology(ExtendedVisionDataset):
             for idx, row in self._entry_dataset.iterrows():
                 dataset_index = idx
                 patches_path = row["patches_path"]
+                
+
+
+                if self.sshid[0]=="11":
+                    if patches_path.startswith("/data"):
+                        patches_path = patches_path.replace("/data", "/nfs/data13", 1)
+                    elif patches_path.startswith("/nfs/data11"):
+                        patches_path = patches_path.replace("/nfs/data11", "/data", 1)
                 self._entry_slide[dataset_index] = sorted(os.listdir(patches_path))
         
         assert self._entries is not None
@@ -97,6 +106,12 @@ class Pathology(ExtendedVisionDataset):
         dataset_index = entries[index]["dataset_index"]
         dataset_path = entry_dataset.iloc[dataset_index]["patches_path"]
         slide_name = entry_slide[dataset_index][dir_index]
+
+        if self.sshid[0]=="11":
+            if dataset_path.startswith("/data"):
+                dataset_path = dataset_path.replace("/data", "/nfs/data13", 1)
+            elif dataset_path.startswith("/nfs/data11"):
+                dataset_path = dataset_path.replace("/nfs/data11", "/data", 1)
 
         image_full_path = os.path.join(dataset_path, slide_name,f"{slide_name}_patch_{actual_index}.jpeg")
         with open(image_full_path, mode="rb") as f:
@@ -151,7 +166,7 @@ class Pathology(ExtendedVisionDataset):
                         break
                     if not patch_file.endswith(".jpeg"):
                         continue
-                    actual_index = int(patch_file.split(".")[0].split("_")[-1])
+                    actual_index = int(patch_file.split(".")[-2].split("_")[-1])
                     entries_array[count_idx]["actual_index"] = actual_index
                     entries_array[count_idx]["dir_index"] = dir_index
                     entries_array[count_idx]["dataset_index"] = dataset_index
@@ -159,12 +174,12 @@ class Pathology(ExtendedVisionDataset):
                     pbar.update(1)
 
         import math
-        epoch_length = sample_count // (96 * 4 * 100)
+        epoch_length = sample_count // (64 * 4 * 100) #96
         epoch_length = math.ceil(epoch_length / 50) * 50
         print(f'saving entries to "{self._entries_path}"')
         print("为了让模型至少见过每张图片一次，需满足：")
         print("batch_size * epochs * epoch_length > dataset_size")
-        print("其中：batch_size = batch_size_per_gpu * gpu_num = 96 * 4 = 384; epochs = 100")
+        print("其中：batch_size = batch_size_per_gpu * gpu_num = 64 * 4 = 384; epochs = 100")
         print(f"因此：epoch_length 为 dataset_size / batch_size / epochs，约为 {epoch_length}，请填入配置文件的train.OFFICIAL_EPOCH_LENGTH")
         self._save_extra(entries_array, self._entries_path)
 

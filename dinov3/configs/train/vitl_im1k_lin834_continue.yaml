@@ -24,6 +24,12 @@ dino:
   koleo_topk: 1
   koleo_distributed_replicas: 0
   force_weight_norm: false
+  local_loss_weight_schedule:
+    start: 1
+    peak: 1
+    end: 0.5
+    warmup_epochs: 1000
+    cosine_epochs: 1
 ibot:
   loss_weight: 1.0
   mask_sample_probability: 0.5
@@ -38,15 +44,38 @@ ibot:
   head_norm_last_layer: false
   head_nlayers: 3
   head_hidden_dim: 2048
+gram:
+  use_loss: true
+  compute_stats: false
+  loss_weight: 1.0
+  ema_teacher: false
+  ckpt: ignore
+  it_load_ema_teacher: -1
+  rep_update: true
+  update_frequency: 10000
+  it_first_update: 115000 #1010000
+  max_updates: 3
+  normalized: true
+  img_level: true
+  remove_neg: false
+  remove_only_teacher_neg: false
+  tokens_used: all
+  global_teacher_resize_method: bicubic
+  global_teacher_resize_antialias: false
+  loss_weight_schedule:
+    start: 0
+    peak: 0
+    end: 2.0
+    warmup_epochs: 1000
+    cosine_epochs: 1
 train:
   batch_size_per_gpu: 64
   dataset_path: ImageNet:split=TRAIN
-  sshid: 13
   output_dir: /checkpoint/dino/qas/rope/vitl16_im1k
   saveckp_freq: 20
   seed: 0
   num_workers: 10
-  OFFICIAL_EPOCH_LENGTH: 4900 #1150
+  OFFICIAL_EPOCH_LENGTH: 3000
   monitor_gradient_norm: false
   chunk_schedule: []
   cache_dataset: true
@@ -58,7 +87,7 @@ train:
   cudagraphs: false
   cell_augmentation: false
   cell_augmentation_type: hpa
-  init_weights_from_chkpt: "../../../PublicDINOv3Checkpoints/dinov3_vitl16_pretrain_lvd1689m-8aa4cbdd.pth" #"MahmoodLab/uni" #"/data/PublicDINOv3Checkpoints/dinov3_vitl16_pretrain_lvd1689m-8aa4cbdd.pth" #
+  init_weights_from_chkpt: "/data/PublicDINOv3Checkpoints/dinov3_vitl16_pretrain_lvd1689m-8aa4cbdd.pth" #"MahmoodLab/uni" #"/data/PublicDINOv3Checkpoints/dinov3_vitl16_pretrain_lvd1689m-8aa4cbdd.pth" #
 student:
   arch: vit_large
   patch_size: 16

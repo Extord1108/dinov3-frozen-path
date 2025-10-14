@@ -52,7 +52,7 @@ gram:
   it_load_ema_teacher: -1
   rep_update: true
   update_frequency: 10000
-  it_first_update: 1010000
+  it_first_update: 115000 #1010000
   max_updates: 3
   normalized: true
   img_level: true
@@ -68,12 +68,12 @@ gram:
     warmup_epochs: 1000
     cosine_epochs: 1
 train:
-  batch_size_per_gpu: 16
+  batch_size_per_gpu: 64
   dataset_path: null
   saveckp_freq: 20
   seed: 0
   num_workers: 10
-  OFFICIAL_EPOCH_LENGTH: 1000
+  OFFICIAL_EPOCH_LENGTH: 2000
   monitor_gradient_norm: false
   chunk_schedule: []
   cache_dataset: true

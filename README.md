@@ -31,8 +31,31 @@ python gen_extra.py
 再开始训练：
 
 ```bash
-PYTHONPATH=${PWD} torchrun --standalone --nnodes=1 --nproc-per-node=4 dinov3/train/train.py --config-file dinov3/configs/train/vitl_im1k_lin834.yaml --output-dir ./results/pathology/ train.dataset_path=Pathology:split=TRAIN:root=./dataset/pathology/:extra=./dataset/pathology/
+CUDA_VISIBLE_DEVICES=0,3 PYTHONPATH=${PWD} torchrun --standalone --nnodes=1 --nproc-per-node=2 dinov3/train/train.py --config-file dinov3/configs/train/vitl_im1k_lin834.yaml --output-dir ./results/vitl16/ train.dataset_path=Pathology:split=TRAIN:root=./dataset/pathology/:extra=./dataset/pathology/
+
+tensorboard --logdir /data/tanyuyi/code/dinov3-frozen-path/results/UNI/tensorboard --bind_all
+
+http://172.18.132.13:6006/
+
+
+CUDA_VISIBLE_DEVICES=0,1,2,3 PYTHONPATH=${PWD} torchrun --standalone --nnodes=1 --nproc-per-node=4 dinov3/train/train.py \
+  --config-file dinov3/configs/train/dinov3_vit7b16_gram_anchor.yaml \
+  --output-dir ./results/vitl16/ train.dataset_path=Pathology:split=TRAIN:root=./dataset/pathology/:extra=./dataset/pathology/ \
+  gram.ckpt=/data/tanyuyi/code/dinov3-frozen-path/results/UNI/eval/training_24999/teacher_checkpoint.pth
+
 ```
+
+提取特征
+```bash
+python /data/tanyuyi/code/dinov3-frozen-path/extract_feature.py.py
+
+CLAM里面有批量代码
+
+cd /nfs/data371/tyy/code/1.CLAM-master-LUAD
+CUDA_VISIBLE_DEVICES=0,1 python extract_features_fp_dinov3.py  --data_h5_dir /data/tanyuyi/data/CMU/一中心/RESULTS116 --data_slide_dir /data/tanyuyi/data/CMU/一中心/WSI116 --csv_path /data/tanyuyi/data/CMU/一中心/RESULTS116/Step_2.csv --feat_dir   /data/tanyuyi/data/FEATURES_DIRECTORY_CTranspath  --batch_size 512 --slide_ext .ndpi --target_patch_size 224 --checkpoint /data/tanyuyi/code/dinov3-frozen-path/results/UNI/eval/training_12499/teacher_checkpoint.pth
+
+```
+
 
 🆕 [2025-09-17] :fire: DINOv3 backbones are now supported by the [PyTorch Image Models / timm](https://github.com/huggingface/pytorch-image-models/) library starting with version [1.0.20](https://github.com/huggingface/pytorch-image-models/releases/tag/v1.0.20)
 
@@ -725,6 +748,9 @@ PYTHONPATH=${PWD} python -m dinov3.run.submit dinov3/eval/log_regression.py \
   output_dir=<PATH/TO/OUTPUT/DIR> \
   train.dataset=ImageNet:split=TRAIN:root=<PATH/TO/DATASET>:extra=<PATH/TO/DATASET> \
   eval.test_dataset=ImageNet:split=VAL:root=<PATH/TO/DATASET>:extra=<PATH/TO/DATASET>
+
+
+
 ```
 
 ### k-NN classification on ImageNet-1k

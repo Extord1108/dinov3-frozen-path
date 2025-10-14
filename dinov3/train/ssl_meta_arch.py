@@ -151,6 +151,14 @@ class SSLMetaArch(nn.Module):
             iter_per_epoch = cfg.train.OFFICIAL_EPOCH_LENGTH
             total_iterations = iter_per_epoch * cfg.optim.epochs
             schedule_cfg = cfg.dino.local_loss_weight_schedule
+
+            # cosine_iterations=(
+            #         iter_per_epoch * schedule_cfg.cosine_epochs if "cosine_epochs" in schedule_cfg else None
+            #     )
+            warmup_iterations=iter_per_epoch * schedule_cfg.warmup_epochs #2000*100
+            print(warmup_iterations,iter_per_epoch , schedule_cfg.warmup_epochs)#100000 2000 50 
+            print("---*******************----------------------------------")
+
             self.dino_local_loss_schedule = linear_warmup_cosine_decay(
                 start=schedule_cfg.start,
                 peak=schedule_cfg.peak,
@@ -188,6 +196,9 @@ class SSLMetaArch(nn.Module):
                 iter_per_epoch = cfg.train.OFFICIAL_EPOCH_LENGTH
                 total_iterations = iter_per_epoch * cfg.optim.epochs
                 schedule_cfg = self.cfg.gram.loss_weight_schedule
+
+
+
                 self.gram_loss_schedule = linear_warmup_cosine_decay(
                     start=schedule_cfg.start,
                     peak=schedule_cfg.peak,

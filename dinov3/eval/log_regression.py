@@ -337,6 +337,8 @@ def eval_log_regression_with_model(*, model: torch.nn.Module, autocast_dtype, co
     # Extracting features
     with torch.autocast("cuda", dtype=autocast_dtype):
         gather_on_cpu = torch.device(config.train.train_features_device) == _CPU_DEVICE
+        
+        
         train_data_dict = extract_features_for_dataset_dict(
             model, train_dataset_dict, config.train.batch_size, config.train.num_workers, gather_on_cpu=gather_on_cpu
         )
@@ -344,6 +346,8 @@ def eval_log_regression_with_model(*, model: torch.nn.Module, autocast_dtype, co
         val_features, val_labels = extract_features(
             model, val_dataset, config.train.batch_size, config.train.num_workers, gather_on_cpu=gather_on_cpu
         )
+
+
         test_dataset, test_data_loader = make_test_dataset_and_data_loader(model, config.eval, transform, gather_on_cpu)
 
     # Moves the model to cpu in-place. Deleting the variable would only delete a reference and not free any space.

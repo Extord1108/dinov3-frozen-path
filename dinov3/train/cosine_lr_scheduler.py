@@ -80,6 +80,8 @@ def linear_warmup_cosine_decay(
     cosine = (cosine + 1) / 2
     cosine = (peak - end) * cosine + end
     remaining_iterations = total_iterations - cosine_iterations - warmup_iterations
+    print(total_iterations , cosine_iterations , warmup_iterations,remaining_iterations)#200000 2000 2000000 -1802000
+    print("--------------------------")#200000 2000 100000 98000
     assert remaining_iterations >= 0
     constant = np.full((remaining_iterations,), fill_value=end)
     return np.concatenate([linear, cosine, constant])
