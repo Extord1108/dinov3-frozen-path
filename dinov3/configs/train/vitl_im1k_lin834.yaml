@@ -108,10 +108,16 @@ optim:
   optimizer: adamw
   weight_decay: 0.04
   weight_decay_end: 0.4
-  lr: 0.001
-  warmup_epochs: 10
-  min_lr: 1.0e-06
-  clip_grad: 3.0
+  ## 11 batchsize小，学习率小一点
+  lr: 0.0002       # 原来 0.001 -> 0.0002 (5x smaller)
+  min_lr: 1.0e-07
+  warmup_epochs: 3
+  clip_grad: 1.5
+  ## 13 batchsize大，学习率大一点
+  # lr: 0.001
+  # warmup_epochs: 10
+  # min_lr: 1.0e-06
+  # clip_grad: 3.0
   freeze_last_layer_epochs: 1
   scaling_rule: sqrt_wrt_1024
   patch_embed_lr_mult: 0.2
