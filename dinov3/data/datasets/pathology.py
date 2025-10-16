@@ -78,34 +78,39 @@ class Pathology(ExtendedVisionDataset):
         if self._entries is None:
             self._entries = self._load_extra(self._entries_path)
         if self._entry_dataset is None:
-            self._entry_dataset = pd.read_csv(os.path.join(self.root, "entry.csv"))
+            _entry_dataset_df = pd.read_csv(os.path.join(self.root, "entry.csv"))
+            self._entry_dataset = np.array(_entry_dataset_df["patches_path"].tolist()).astype(np.bytes_)
         if self._entry_slide is None:
-            self._entry_slide = {}
-            for idx, row in self._entry_dataset.iterrows():
-                dataset_index = idx
+            _entry_slide = []
+            max_slide_num = 0
+            for idx, row in _entry_dataset_df.iterrows():
                 patches_path = row["patches_path"]
-                
-
+                max_slide_num = max(max_slide_num, len(os.listdir(patches_path)))
+            for idx, row in _entry_dataset_df.iterrows():
+                patches_path = row["patches_path"]
 
                 if self.sshid[0]=="11":
                     if patches_path.startswith("/data"):
                         patches_path = patches_path.replace("/data", "/nfs/data13", 1)
                     elif patches_path.startswith("/nfs/data11"):
                         patches_path = patches_path.replace("/nfs/data11", "/data", 1)
-                self._entry_slide[dataset_index] = sorted(os.listdir(patches_path))
+
+                pad_slide_num = max_slide_num - len(os.listdir(patches_path))
+                _entry_slide.append(sorted(os.listdir(patches_path)) + [""]*pad_slide_num)
+            self._entry_slide = np.array(_entry_slide).astype(np.bytes_)
         
         assert self._entries is not None
         assert self._entry_dataset is not None
         assert self._entry_slide is not None
         return self._entries, self._entry_dataset, self._entry_slide
-
+    
     def get_image_data(self, index: int) -> bytes:
         entries, entry_dataset, entry_slide = self._get_entries()
         actual_index = entries[index]["actual_index"]
         dir_index = entries[index]["dir_index"]
         dataset_index = entries[index]["dataset_index"]
-        dataset_path = entry_dataset.iloc[dataset_index]["patches_path"]
-        slide_name = entry_slide[dataset_index][dir_index]
+        dataset_path = str(entry_dataset[dataset_index],encoding="utf-8")
+        slide_name = str(entry_slide[dataset_index][dir_index],encoding="utf-8")
 
         if self.sshid[0]=="11":
             if dataset_path.startswith("/data"):

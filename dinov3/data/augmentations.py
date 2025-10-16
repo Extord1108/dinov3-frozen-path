@@ -8,7 +8,8 @@ import logging
 import numpy as np
 import torch
 from torch import nn
-from torchvision.transforms import v2
+#from torchvision.transforms import v2
+import torchvision.transforms as v2
 
 from dinov3.data.transforms import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD, GaussianBlur, make_normalize_transform
 
@@ -154,8 +155,9 @@ class DataAugmentationDINO(object):
         # normalization
         self.normalize = v2.Compose(
             [
-                v2.ToImage(),
-                v2.ToDtype(torch.float32, scale=True),
+                # v2.ToImage(),
+                # v2.ToDtype(torch.float32, scale=True),
+                v2.ToTensor(),
                 make_normalize_transform(mean=mean, std=std),
             ]
         )

@@ -7,7 +7,8 @@ import logging
 from typing import Sequence
 
 import torch
-from torchvision.transforms import v2
+#from torchvision.transforms import v2
+import torchvision.transforms as v2
 
 logger = logging.getLogger("dinov3")
 
